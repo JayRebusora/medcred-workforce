@@ -1,0 +1,403 @@
+// MedCred Workforce — Prisma schema
+// Path 2: generalized healthcare staffing (not nurse-only)
+// Credential model: hybrid (per-type baseline + per-shift extras)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+  CLIENT
+}
+
+enum EmployeeType {
+  REGISTERED_NURSE
+  LICENSED_PRACTICAL_NURSE
+  CERTIFIED_NURSING_ASSISTANT
+  RESPIRATORY_THERAPIST
+  MEDICAL_ASSISTANT
+  // Extend this enum and run `prisma migrate dev` to add more.
+}
+
+enum CredentialType {
+  RN_LICENSE
+  LPN_LICENSE
+  CNA_CERTIFICATION
+  BLS_CERTIFICATION
+  ACLS_CERTIFICATION
+  PALS_CERTIFICATION
+  RT_LICENSE
+  MA_CERTIFICATION
+  TB_TEST
+  COVID_VACCINATION
+}
+
+enum CredentialStatus {
+  PENDING   // Uploaded, awaiting admin review
+  APPROVED  // Admin approved, counts toward shift eligibility
+  REJECTED  // Admin rejected with a note
+  EXPIRED   // Past expiry date; set by the nightly cron or computed on the fly
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+enum ShiftStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AssignmentStatus {
+  PROPOSED
+  CONFIRMED
+  DECLINED
+  NO_SHOW
+  COMPLETED
+}
+
+enum NotificationType {
+  CREDENTIAL_EXPIRING_SOON
+  CREDENTIAL_EXPIRED
+  CREDENTIAL_APPROVED
+  CREDENTIAL_REJECTED
+  SHIFT_ASSIGNED
+  SHIFT_CANCELLED
+  APPLICATION_STATUS_CHANGED
+  NEW_MESSAGE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  ASSIGN
+  LOGIN
+  LOGOUT
+}
+
+// ─────────────────────────────────────────────────────────────
+// CORE: User + role-specific profiles
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   // bcrypt hash — never the raw password
+  role         Role
+  firstName    String
+  lastName     String
+  phone        String?
+  isActive     Boolean  @default(true)
+  deletedAt    DateTime?   // Soft delete
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Role-specific 1:1 profiles (only one will be populated based on role)
+  employee  Employee?
+  facility  Facility?
+
+  // Things a user can do
+  sentMessages     Message[]      @relation("SentMessages")
+  receivedMessages Message[]      @relation("ReceivedMessages")
+  notifications    Notification[]
+  auditLogs        AuditLog[]     @relation("AuditActor")
+
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model Employee {
+  id                String       @id @default(cuid())
+  userId            String       @unique
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  employeeType      EmployeeType
+  yearsOfExperience Int          @default(0)
+  bio               String?      @db.Text
+
+  credentials       Credential[]
+  assignments       ShiftAssignment[]
+
+  deletedAt         DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([employeeType])
+  @@index([deletedAt])
+}
+
+model Facility {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  zipCode      String
+  facilityType String?  // "HOSPITAL" | "CLINIC" | "LONG_TERM_CARE" etc. Left as String for flexibility.
+
+  shifts       Shift[]
+
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([deletedAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// CREDENTIALS: per-employee records + per-type baseline requirements
+// ─────────────────────────────────────────────────────────────
+
+model Credential {
+  id             String           @id @default(cuid())
+  employeeId     String
+  employee       Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  type           CredentialType
+  credentialNumber String?        // License/cert number; optional (not all credentials have one)
+  issuingBody    String?          // e.g. "Pennsylvania State Board of Nursing"
+  issuedDate     DateTime
+  expiryDate     DateTime
+
+  documentUrl    String?          // UploadThing URL to the uploaded PDF/image
+
+  status         CredentialStatus @default(PENDING)
+  adminNote      String?          // Admin note on approve/reject/renew
+
+  reviewedAt     DateTime?
+  reviewedById   String?          // Admin user id who reviewed
+
+  deletedAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([expiryDate])           // Cron scans by expiry; needs an index
+  @@index([type])
+}
+
+// Maps EmployeeType → required CredentialType (the "baseline matrix").
+// A REGISTERED_NURSE needs RN_LICENSE + BLS_CERTIFICATION, etc.
+// Admin manages this matrix through the UI.
+model CredentialRequirement {
+  id             String         @id @default(cuid())
+  employeeType   EmployeeType
+  credentialType CredentialType
+
+  createdAt      DateTime @default(now())
+
+  // An employee type shouldn't require the same credential twice
+  @@unique([employeeType, credentialType])
+  @@index([employeeType])
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHIFTS + ASSIGNMENTS
+// ─────────────────────────────────────────────────────────────
+
+model Shift {
+  id            String       @id @default(cuid())
+  facilityId    String
+  facility      Facility     @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  title         String       // "Night shift — ICU"
+  description   String?      @db.Text
+  startAt       DateTime
+  endAt         DateTime
+
+  // Which employee types can fill this shift (at least one must be present)
+  allowedEmployeeTypes EmployeeType[]
+
+  // Extra credentials required ON TOP OF the employee-type baseline.
+  // e.g., ICU shift adds ACLS_CERTIFICATION even though RN baseline doesn't require it.
+  extraRequiredCredentials CredentialType[]
+
+  hourlyRate    Decimal?     @db.Decimal(10, 2)
+  status        ShiftStatus  @default(OPEN)
+
+  assignments   ShiftAssignment[]
+
+  deletedAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([facilityId])
+  @@index([startAt])
+  @@index([status])
+}
+
+model ShiftAssignment {
+  id                 String           @id @default(cuid())
+  shiftId            String
+  shift              Shift            @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  employeeId         String
+  employee           Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  status             AssignmentStatus @default(PROPOSED)
+
+  // Credential check snapshot — captured at assignment time, never mutated.
+  // If a credential later expires, this record still reflects the state at assignment.
+  credentialCheckPassed   Boolean
+  credentialCheckSnapshot Json       // { credentials: [{ id, type, status, expiryDate }], missing: [CredentialType] }
+  credentialCheckedAt     DateTime @default(now())
+
+  assignedById       String?          // Admin who made the assignment
+  note               String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // An employee can only have one assignment row per shift
+  @@unique([shiftId, employeeId])
+  @@index([employeeId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMMUNICATION + ALERTS
+// ─────────────────────────────────────────────────────────────
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  body        String   @db.Text
+  readAt      DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([senderId, recipientId])
+  @@index([recipientId, readAt])   // For unread-counts per recipient
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      NotificationType
+  title     String
+  body      String           @db.Text
+  linkUrl   String?          // Optional deep link into the app
+  readAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// APPLICATIONS + INVITES (applicant onboarding flow)
+// ─────────────────────────────────────────────────────────────
+
+model Application {
+  id        String            @id @default(cuid())
+
+  // Role the applicant is applying for — EMPLOYEE or CLIENT
+  roleType  Role
+
+  // Shared fields
+  email     String
+  firstName String
+  lastName  String
+  phone     String?
+
+  // Employee-specific (populated when roleType = EMPLOYEE)
+  employeeType      EmployeeType?
+  yearsOfExperience Int?
+
+  // Facility-specific (populated when roleType = CLIENT)
+  facilityName String?
+  addressLine1 String?
+  city         String?
+  state        String?
+  zipCode      String?
+
+  // Uploaded docs (JSON array of { type, url }) — optional, for employees submitting credentials up front
+  documents Json?
+
+  status    ApplicationStatus @default(PENDING)
+  adminNote String?
+
+  reviewedAt   DateTime?
+  reviewedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model InviteToken {
+  id            String   @id @default(cuid())
+  token         String   @unique        // Random secure token, hashed before storage
+  email         String
+  applicationId String?                  // Link back to the approved application
+
+  expiresAt     DateTime                 // 48 hours from creation
+  usedAt        DateTime?                // Null until consumed
+
+  createdAt     DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// AUDIT LOG (immutable)
+// ─────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String      @id @default(cuid())
+
+  actorId    String?                    // User who performed the action (null for system/cron actions)
+  actor      User?       @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  action     AuditAction
+  entityType String                     // "Credential" | "Shift" | "Application" etc.
+  entityId   String                     // id of the affected row
+  summary    String                     // Human-readable: "Approved credential for John Doe"
+
+  // Full before/after state for UPDATE; null for CREATE/DELETE/action-only events.
+  beforeState Json?
+  afterState  Json?
+
+  ipAddress  String?
+  userAgent  String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
