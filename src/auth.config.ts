@@ -39,7 +39,9 @@ export default {
         publicPaths.includes(path) ||
         path.startsWith("/apply/") ||
         path.startsWith("/setup-password/") ||
-        path.startsWith("/api/auth");
+        path.startsWith("/api/auth") ||
+        path.startsWith("/api/applications") || // public submit + admin review (admin role check happens in route handler)
+        path.startsWith("/api/setup-password"); // token-gated, no session expected
 
       if (isPublic) return true;
 

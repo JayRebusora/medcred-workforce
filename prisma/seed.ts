@@ -5,7 +5,15 @@
 // Run with: pnpm dlx prisma db seed
 // (prisma.config.ts should reference this file under `migrations.seed`.)
 
-import { PrismaClient, Role, EmployeeType, CredentialType, CredentialStatus, ShiftStatus, AssignmentStatus } from "@prisma/client";
+import {
+  PrismaClient,
+  Role,
+  EmployeeType,
+  CredentialType,
+  CredentialStatus,
+  ShiftStatus,
+  AssignmentStatus,
+} from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
@@ -17,10 +25,22 @@ const prisma = new PrismaClient({ adapter });
 // Baseline credential requirements per employee type.
 // Shifts can require EXTRA credentials on top of these.
 const CREDENTIAL_MATRIX: Record<EmployeeType, CredentialType[]> = {
-  REGISTERED_NURSE: [CredentialType.RN_LICENSE, CredentialType.BLS_CERTIFICATION],
-  LICENSED_PRACTICAL_NURSE: [CredentialType.LPN_LICENSE, CredentialType.BLS_CERTIFICATION],
-  CERTIFIED_NURSING_ASSISTANT: [CredentialType.CNA_CERTIFICATION, CredentialType.BLS_CERTIFICATION],
-  RESPIRATORY_THERAPIST: [CredentialType.RT_LICENSE, CredentialType.BLS_CERTIFICATION],
+  REGISTERED_NURSE: [
+    CredentialType.RN_LICENSE,
+    CredentialType.BLS_CERTIFICATION,
+  ],
+  LICENSED_PRACTICAL_NURSE: [
+    CredentialType.LPN_LICENSE,
+    CredentialType.BLS_CERTIFICATION,
+  ],
+  CERTIFIED_NURSING_ASSISTANT: [
+    CredentialType.CNA_CERTIFICATION,
+    CredentialType.BLS_CERTIFICATION,
+  ],
+  RESPIRATORY_THERAPIST: [
+    CredentialType.RT_LICENSE,
+    CredentialType.BLS_CERTIFICATION,
+  ],
   MEDICAL_ASSISTANT: [CredentialType.MA_CERTIFICATION],
 };
 
@@ -179,6 +199,37 @@ async function main() {
     },
   });
 
+  // ─── Demo applicant (pending review) ─────────────────────────────────
+  console.log("  → Creating demo applicant (Sarah, pending review)");
+  await prisma.application.create({
+    data: {
+      roleType: Role.EMPLOYEE,
+      email: "sarah.applicant@example.com",
+      firstName: "Sarah",
+      lastName: "Applicant",
+      phone: "555-0200",
+      employeeType: EmployeeType.REGISTERED_NURSE,
+      yearsOfExperience: 3,
+      documents: [
+        {
+          type: CredentialType.RN_LICENSE,
+          credentialNumber: "RN-PA-445566",
+          issuingBody: "Pennsylvania State Board of Nursing",
+          issuedDate: daysFromNow(-60).toISOString().slice(0, 10),
+          expiryDate: daysFromNow(700).toISOString().slice(0, 10),
+        },
+        {
+          type: CredentialType.BLS_CERTIFICATION,
+          credentialNumber: "BLS-334455",
+          issuingBody: "American Heart Association",
+          issuedDate: daysFromNow(-90).toISOString().slice(0, 10),
+          expiryDate: daysFromNow(640).toISOString().slice(0, 10),
+        },
+      ],
+      // status defaults to PENDING
+    },
+  });
+
   // ─── Demo shifts ─────────────────────────────────────────────────
   console.log("  → Creating demo shifts");
   const facility = facilityUser.facility!;
@@ -219,7 +270,10 @@ async function main() {
           credentialCheckPassed: true,
           credentialCheckSnapshot: {
             checkedAt: new Date().toISOString(),
-            required: [CredentialType.RN_LICENSE, CredentialType.BLS_CERTIFICATION],
+            required: [
+              CredentialType.RN_LICENSE,
+              CredentialType.BLS_CERTIFICATION,
+            ],
             verified: noraCreds.map((c) => ({
               id: c.id,
               type: c.type,
@@ -253,7 +307,10 @@ async function main() {
           credentialCheckPassed: true,
           credentialCheckSnapshot: {
             checkedAt: daysFromNow(-8).toISOString(),
-            required: [CredentialType.RN_LICENSE, CredentialType.BLS_CERTIFICATION],
+            required: [
+              CredentialType.RN_LICENSE,
+              CredentialType.BLS_CERTIFICATION,
+            ],
             verified: noraCreds.map((c) => ({
               id: c.id,
               type: c.type,
@@ -272,7 +329,9 @@ async function main() {
   console.log("Demo accounts:");
   console.log("  Admin    → admin@medcred.com     / admin123");
   console.log("  Employee → employee@medcred.com  / employee123  (approved)");
-  console.log("  Employee → pending@medcred.com   / employee123  (pending review)");
+  console.log(
+    "  Employee → pending@medcred.com   / employee123  (pending review)",
+  );
   console.log("  Client   → hospital@medcred.com  / client123");
 }
 
