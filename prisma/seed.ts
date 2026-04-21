@@ -119,6 +119,29 @@ async function main() {
     include: { facility: true },
   });
 
+  // ─── Second demo facility (for multi-tenant testing) ─────────────
+  console.log("  → Creating second demo facility");
+  const secondFacilityPasswordHash = await bcrypt.hash("client123", 10);
+  await prisma.user.create({
+    data: {
+      email: "otherhospital@medcred.com",
+      passwordHash: secondFacilityPasswordHash,
+      role: Role.CLIENT,
+      firstName: "Other",
+      lastName: "Hospital",
+      facility: {
+        create: {
+          name: "Second General Hospital",
+          addressLine1: "200 Second Street",
+          city: "Harrisburg",
+          state: "PA",
+          zipCode: "17101",
+          facilityType: "HOSPITAL",
+        },
+      },
+    },
+  });
+
   // ─── Demo employee 1: fully approved, ready to work ──────────────
   console.log("  → Creating demo employee (approved)");
   const employeePasswordHash = await bcrypt.hash("employee123", 10);
