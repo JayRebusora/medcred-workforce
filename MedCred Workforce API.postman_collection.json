@@ -1,0 +1,63 @@
+{
+  "info": {
+    "_postman_id": "05a3a23a-b4c6-4702-85b4-a429a76289c8",
+    "name": "MedCred Workforce API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46206354",
+    "_collection_link": "https://go.postman.co/collection/46206354-05a3a23a-b4c6-4702-85b4-a429a76289c8?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "PATCH /assignments/[id] - 404 ownership check",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "PATCH /assignments/[id] - 409 status guard",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "authjs.session-token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiTy04VnBMXzM2aXYtX1hfWlpxMjh3aGU5NTNFb1FXSS1xOTdhX1o2Zk1ZMUNnckV2VnlQV1NVM0hidUNma0NrWVN0V3ZLNUR4WjRNbXUwTWQteGRHU1EifQ..KrCBpdQJScOcd528OtB7OA.E_1TOKz0cc6eIbKizo8Y0F45-apZyFUrpuA6-JI48Ied-Qgtoumli60QeZTvnfu6vqIxWjgjy9k5FwHFn47fA4HuhAo3t0MoeVvxB8AZQm-_6dpWuaSo8X2qKLoz9LNpuARaOQ7OGfmOi-hunt8pvLpUzvBfa2qjM7gG2lZk0PZoIBWwIU9DTq2PESxoqLWUySYbA3TPulG0CJpEKibSgIJrzzugsBwZYU4bdQi_6-gFhEYiJyWJq3zyfX7HC7iwJa88pEyvQIdhtE-lC0LuRJMi_FYsg6kbt93BpJAsDmA.9nkVKj6F949sqm76uLlMxLBgsQuY0aBEZIAOI-JJJf0",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"action\":\"CONFIRM\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/assignments/cmo7ukd6l0001o8exag31rgxd",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "assignments",
+            "cmo7ukd6l0001o8exag31rgxd"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "PATCH /assignments/[id] - 401 wrong role",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ]
+}
