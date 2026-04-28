@@ -1,4 +1,3 @@
-// src/app/(app)/my/shifts/MyShiftsEmployee.tsx
 // Employee's personal shifts view. Three sections:
 //   1. Needs response — PROPOSED assignments awaiting Confirm/Decline
 //   2. Upcoming       — CONFIRMED assignments that haven't started

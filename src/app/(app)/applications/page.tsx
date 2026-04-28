@@ -1,4 +1,3 @@
-// src/app/(app)/applications/page.tsx
 // Admin-only list of applications. Filters by status via query param (?status=PENDING).
 // Defaults to pending.
 

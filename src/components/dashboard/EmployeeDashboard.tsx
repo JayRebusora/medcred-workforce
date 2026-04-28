@@ -1,4 +1,3 @@
-// src/components/dashboard/EmployeeDashboard.tsx
 // Personal view for employees: their upcoming shifts, credential statuses,
 // and anything requiring their attention.
 

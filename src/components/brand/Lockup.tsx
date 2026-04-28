@@ -1,8 +1,3 @@
-// src/components/brand/Lockup.tsx
-// Brand lockup: a geometric monogram (medical cross worked into an M shape)
-// paired with the wordmark. Used on public pages and could be reused
-// in the app sidebar later.
-
 type Props = {
   size?: "sm" | "md" | "lg";
   wordmark?: boolean;

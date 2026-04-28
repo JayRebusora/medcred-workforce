@@ -1,198 +1,259 @@
-// src/app/(auth)/login/page.tsx
-// Redesigned login: split-screen. Left panel is editorial (lattice + pull-quote),
-// right panel is the functional form. Same server-action sign-in as before.
+// Login page.
 
+"use client";
+
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { AuthError } from "next-auth";
-import { signIn, auth } from "@/auth";
-import { Lockup } from "@/components/brand/Lockup";
-import { CredentialLattice } from "@/components/brand/CredentialLattice";
+import { signIn } from "next-auth/react";
 
-type PageProps = {
-  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
-};
+export default function LoginPage() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const callbackUrl = params.get("callbackUrl") ?? "/dashboard";
 
-function getErrorMessage(code: string | undefined): string | null {
-  if (!code) return null;
-  switch (code) {
-    case "CredentialsSignin":
-      return "Invalid email or password.";
-    case "AccessDenied":
-      return "You don't have access to this resource.";
-    default:
-      return "Something went wrong. Please try again.";
-  }
-}
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function LoginPage({ searchParams }: PageProps) {
-  const session = await auth();
-  if (session?.user) redirect("/dashboard");
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
 
-  const params = await searchParams;
-  const errorMessage = getErrorMessage(params.error);
-  const callbackUrl = params.callbackUrl ?? "/dashboard";
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
 
-  async function handleLogin(formData: FormData) {
-    "use server";
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    try {
-      await signIn("credentials", { email, password, redirectTo: callbackUrl });
-    } catch (err) {
-      if (err instanceof AuthError) {
-        redirect(`/login?error=${err.type}`);
-      }
-      throw err;
+    if (res?.error) {
+      setError("Invalid email or password.");
+      setSubmitting(false);
+      return;
     }
+
+    router.push(callbackUrl);
+    router.refresh();
   }
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* Left panel — editorial */}
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-slate-50 px-12 py-10 lg:flex lg:w-[44%]">
-        <div className="relative z-10">
-          <Lockup size="md" />
-        </div>
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Left — editorial pane */}
+      <aside
+        className="relative hidden lg:flex flex-col justify-between p-12"
+        style={{ background: "var(--color-ink)" }}
+      >
+        <Link href="/" className="flex items-center gap-2 group">
+          <Logomark inverted />
+          <span className="display text-xl text-white">medcred</span>
+        </Link>
 
-        {/* Lattice sits behind, fading into the page */}
-        <div className="absolute inset-x-0 top-24 flex justify-center opacity-80">
-          <CredentialLattice className="w-[520px] max-w-full" />
-        </div>
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/70 to-slate-50"
-        />
-
-        <div className="relative z-10 max-w-sm">
-          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
-            From the field
-          </p>
-          <blockquote
-            className="text-2xl leading-snug text-slate-800"
-            style={{ fontFamily: "var(--font-serif)" }}
+        <div className="max-w-md">
+          <div className="eyebrow" style={{ color: "rgba(255,255,255,0.5)" }}>
+            Welcome back
+          </div>
+          <h1
+            className="display flex justify-center text-white mt-4 whitespace-nowrap"
+            style={{
+              fontSize: "clamp(2rem, 4.5vw, 3.5rem)",
+              letterSpacing: "-0.04em",
+              lineHeight: "1",
+            }}
           >
-            &ldquo;If a certification expires at 11:59 PM, the system should
-            know by 12:00 AM. Paper clipboards don&rsquo;t have that property.
-            Software does.&rdquo;
-          </blockquote>
-          <p className="mt-4 text-xs text-slate-500">
-            &mdash; The design brief behind MedCred Workforce
+            Apply.{" "}
+            <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 500 }}>
+              Apply · Verify · Work
+            </span>{" "}
+            Work.
+          </h1>
+          <p
+            className="mt-6 text-sm leading-relaxed max-w-sm"
+            style={{ color: "rgba(255,255,255,0.7)" }}
+          >
+            Healthcare staffing that checks credentials before it checks
+            calendars.
           </p>
+        </div>
+
+        <div
+          className="text-xs mono"
+          style={{ color: "rgba(255,255,255,0.35)" }}
+        >
+          v0.2 · Capstone project · 2026
         </div>
       </aside>
 
-      {/* Right panel — form */}
-      <main className="flex w-full flex-col justify-between p-6 lg:w-[56%] lg:px-16 lg:py-10">
-        {/* Mobile lockup (desktop shows it in the left panel) */}
-        <div className="flex items-center justify-between lg:hidden">
-          <Lockup size="sm" />
-          <Link
-            href="/"
-            className="text-sm text-slate-600 hover:text-slate-900"
-          >
-            &larr; Home
+      {/* Right — form pane */}
+      <main className="flex flex-col">
+        <header className="lg:hidden p-6 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Logomark />
+            <span className="display text-xl text-ink">medcred</span>
           </Link>
-        </div>
+        </header>
 
-        {/* Desktop: top-right "back to home" */}
-        <div className="hidden items-center justify-end lg:flex">
-          <Link
-            href="/"
-            className="text-sm text-slate-600 transition hover:text-slate-900"
-          >
-            &larr; Back to home
-          </Link>
-        </div>
-
-        <div className="mx-auto w-full max-w-sm py-12">
-          <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
-            Sign in
-          </p>
-          <h1
-            className="text-4xl leading-tight text-slate-900"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            Welcome back.
-          </h1>
-          <p className="mt-3 text-sm text-slate-600">
-            Enter your credentials to access your portal.
-          </p>
-
-          {errorMessage && (
-            <div
-              role="alert"
-              className="mt-6 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-            >
-              {errorMessage}
-            </div>
-          )}
-
-          <form action={handleLogin} className="mt-6 space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-600"
+        <div className="flex-1 flex items-center justify-center p-6 md:p-12">
+          <div className="w-full max-w-sm">
+            <div className="lg:hidden eyebrow mb-2">Welcome back</div>
+            <h2 className="display text-3xl text-ink">Sign in</h2>
+            <p className="mt-2 text-sm text-muted">
+              New here?{" "}
+              <Link
+                href="/apply"
+                className="text-ink underline-offset-4 hover:underline"
               >
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
+                Start an application →
+              </Link>
+            </p>
+
+            <form onSubmit={submit} className="mt-8 space-y-4">
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-xl border px-3 py-2.5 text-sm"
+                  style={{
+                    background: "var(--color-danger-bg)",
+                    borderColor: "rgba(185, 28, 28, 0.2)",
+                    color: "var(--color-danger)",
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
+              <FormField
+                label="Email address"
                 type="email"
-                required
+                value={email}
+                onChange={setEmail}
+                placeholder="you@hospital.com"
                 autoComplete="email"
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-600"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
                 required
-                autoComplete="current-password"
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
               />
+              <FormField
+                label="Password"
+                type="password"
+                value={password}
+                onChange={setPassword}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
+
+              <button
+                type="submit"
+                disabled={submitting || !email || !password}
+                className="btn-ink w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? "Signing in..." : "Sign in"}
+                {!submitting && (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path
+                      d="M2 7h10M8 3l4 4-4 4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
+            </form>
+
+            {/* Demo accounts */}
+            <div className="mt-10 surface p-5">
+              <div className="eyebrow mb-3">Demo accounts</div>
+              <ul className="space-y-2 text-xs">
+                <DemoRow role="Admin" email="admin@medcred.com" pw="admin123" />
+                <DemoRow
+                  role="Facility"
+                  email="hospital@medcred.com"
+                  pw="client123"
+                />
+                <DemoRow
+                  role="Employee"
+                  email="employee@medcred.com"
+                  pw="employee123"
+                />
+                <DemoRow
+                  role="Pending"
+                  email="pending@medcred.com"
+                  pw="employee123"
+                />
+              </ul>
             </div>
-
-            <button
-              type="submit"
-              className="mt-2 w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
-            >
-              Sign in
-            </button>
-          </form>
-
-          <p className="mt-8 text-center text-xs text-slate-500">
-            Don&rsquo;t have an account?{" "}
-            <Link
-              href="/apply"
-              className="font-medium text-slate-700 hover:underline"
-            >
-              Apply to join
-            </Link>
-          </p>
-        </div>
-
-        {/* Footer meta */}
-        <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-6 text-xs text-slate-500">
-          <span className="font-mono uppercase tracking-wider">
-            Secure · TLS · JWT-signed session
-          </span>
-          <span className="font-mono uppercase tracking-wider">
-            &copy; {new Date().getFullYear()}
-          </span>
+          </div>
         </div>
       </main>
     </div>
+  );
+}
+
+function FormField({
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  required,
+}: {
+  label: string;
+  type: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  autoComplete?: string;
+  required?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-medium tracking-wider uppercase text-muted mb-1.5">
+        {label}
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        required={required}
+        className="w-full rounded-xl border bg-card px-4 py-3 text-sm text-ink shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-1"
+        style={{ borderColor: "var(--color-line)" }}
+      />
+    </label>
+  );
+}
+
+function DemoRow({
+  role,
+  email,
+  pw,
+}: {
+  role: string;
+  email: string;
+  pw: string;
+}) {
+  return (
+    <li className="flex items-center justify-between gap-3 mono">
+      <span className="text-muted shrink-0 w-16">{role}</span>
+      <span className="text-ink truncate">{email}</span>
+      <span className="text-mute2 text-[10px]">{pw}</span>
+    </li>
+  );
+}
+
+function Logomark({ inverted = false }: { inverted?: boolean }) {
+  const ink = inverted ? "white" : "#0b1220";
+  const accent = "#047857";
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <rect x="2" y="11" width="3" height="9" rx="1" fill={ink} />
+      <rect x="7" y="6" width="3" height="14" rx="1" fill={ink} />
+      <rect x="12" y="2" width="3" height="18" rx="1" fill={ink} />
+      <circle cx="18" cy="4" r="2" fill={accent} />
+    </svg>
   );
 }

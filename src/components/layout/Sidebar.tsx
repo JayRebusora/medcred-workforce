@@ -1,7 +1,3 @@
-// src/components/layout/Sidebar.tsx
-// Role-aware sidebar. Each nav item declares which roles can see it;
-// we filter based on the current user's role and hide everything else.
-
 import Link from "next/link";
 import { Role } from "@prisma/client";
 

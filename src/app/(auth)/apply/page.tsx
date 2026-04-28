@@ -1,7 +1,4 @@
-// src/app/(auth)/apply/page.tsx
-// 3-step application wizard. Client-component because it manages its own
-// step state, field state, and validation display.
-//
+// 3-step application wizard.
 // Steps:
 //   1. Role + personal info
 //   2. Role-specific details (+ credentials for employees)

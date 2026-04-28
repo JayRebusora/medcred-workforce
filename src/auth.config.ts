@@ -1,10 +1,3 @@
-// src/auth.config.ts
-// Edge-safe NextAuth configuration.
-// This file is imported by BOTH the Node runtime (auth.ts) and the Edge
-// runtime (middleware.ts), so it must NOT import Prisma, bcrypt, or any
-// Node-only module. The Credentials provider that needs those lives in
-// auth.ts instead.
-
 import type { NextAuthConfig } from "next-auth";
 
 export default {

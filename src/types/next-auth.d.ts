@@ -1,7 +1,3 @@
-// src/types/next-auth.d.ts
-// Extends NextAuth's Session and JWT types with our custom fields (id, role).
-// Without this file, TypeScript will complain that session.user.role doesn't exist.
-
 import { Role } from "@prisma/client";
 import { DefaultSession } from "next-auth";
 

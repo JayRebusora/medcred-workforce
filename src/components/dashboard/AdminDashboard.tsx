@@ -1,4 +1,3 @@
-// src/components/dashboard/AdminDashboard.tsx
 // System-wide overview for admins: pending applications, pending credentials,
 // open shifts, total employees/facilities, credentials expiring soon.
 

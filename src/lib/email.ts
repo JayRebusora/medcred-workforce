@@ -1,11 +1,3 @@
-// src/bil / email.ts;
-// Mock email sender. In a real deployment this would call Resend. For the
-// capstone build we log the message to the server console and return the
-// rendered URL so the admin UI can display it as a "copy this link" flash.
-//
-// Swap the implementation for a real Resend call later without changing
-// any callers.
-
 type InviteEmailInput = {
   to: string;
   firstName: string;

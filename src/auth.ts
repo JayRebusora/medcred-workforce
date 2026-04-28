@@ -1,9 +1,3 @@
-// src/auth.ts
-// Full NextAuth configuration — extends auth.config.ts with the Credentials
-// provider, which uses bcrypt + Prisma (both Node-only). This file should
-// only be imported from server components, API routes, and server actions
-// — NEVER from middleware.
-
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";

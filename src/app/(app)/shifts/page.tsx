@@ -1,8 +1,5 @@
-// src/app/(app)/shifts/page.tsx
 // Admin-only shifts list. Status filter tabs, server-side pagination
 // (20 per page), sort by start time ascending by default.
-//
-// Employees and facilities get their own /my/shifts page (issues #4, #5).
 
 import Link from "next/link";
 import { redirect } from "next/navigation";

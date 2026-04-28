@@ -1,54 +1,49 @@
-// src/app/layout.tsx
-// Root layout. Loads three Google fonts via next/font:
-//   - Instrument Serif (display, hero typography)
-//   - Inter Tight      (UI body, forms, tables, buttons)
-//   - JetBrains Mono   (credential IDs and monospace accents)
-// Fonts expose as CSS variables so they work in Tailwind classes and arbitrary CSS.
-
-import type { Metadata } from "next";
-import {
-  Instrument_Serif,
-  Inter_Tight,
-  JetBrains_Mono,
-} from "next/font/google";
 import "./globals.css";
+import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 
-const serif = Instrument_Serif({
+const interTight = Inter_Tight({
   subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
-  variable: "--font-serif",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
+  variable: "--font-body-loaded",
 });
 
-const sans = Inter_Tight({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-sans",
+  weight: ["400", "500"],
   display: "swap",
+  variable: "--font-mono-loaded",
 });
 
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-});
-
-export const metadata: Metadata = {
-  title: "MedCred Workforce",
-  description: "Healthcare staffing with credential compliance.",
+export const metadata = {
+  title: "MedCred Workforce — Credentialed healthcare staffing",
+  description:
+    "Apply, get verified, and work shifts at hospitals that need you. " +
+    "MedCred matches credentialed healthcare professionals to facilities " +
+    "with compliance built in.",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${serif.variable} ${mono.variable}`}
+      className={`${interTight.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="font-sans antialiased">{children}</body>
+      <body
+        style={
+          {
+            ["--font-display" as string]: `var(--font-body-loaded), -apple-system, system-ui, sans-serif`,
+            ["--font-body" as string]: `var(--font-body-loaded), -apple-system, system-ui, sans-serif`,
+            ["--font-mono" as string]: `var(--font-mono-loaded), "SF Mono", Menlo, monospace`,
+          } as React.CSSProperties
+        }
+      >
+        {children}
+      </body>
     </html>
   );
 }

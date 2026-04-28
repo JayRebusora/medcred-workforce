@@ -1,11 +1,3 @@
-// src/lib/tokens.ts
-// Invite token generation. The raw token goes into the email link;
-// the SHA-256 hash is what we store in the database.
-//
-// Security model: if the DB is compromised, an attacker sees only hashes,
-// which cannot be reversed to produce usable tokens. Same pattern as
-// password reset links in most real-world apps.
-
 import { randomBytes, createHash } from "crypto";
 
 export const TOKEN_BYTES = 32; // 256 bits of entropy

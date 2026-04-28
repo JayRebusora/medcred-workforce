@@ -1,13 +1,3 @@
-// src/app/api/applications/[id]/route.ts
-// PATCH — approve or decline an application. Admin only.
-//
-// Body: { action: "APPROVE" | "DECLINE", note?: string }
-//   - APPROVE: note optional. Generates InviteToken, "sends" invite email.
-//     Returns { status: "APPROVED", setupUrl: string } — setupUrl is the
-//     raw token URL, returned so the admin UI can display it for demo purposes.
-//     In production the raw URL would only go into the email, not the response.
-//   - DECLINE: note required. "Sends" decline email. Returns { status: "DECLINED" }.
-
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";

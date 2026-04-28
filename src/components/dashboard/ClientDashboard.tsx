@@ -1,4 +1,3 @@
-// src/components/dashboard/ClientDashboard.tsx
 // Facility-side view: coverage, upcoming shifts, assigned staff.
 
 import { prisma } from "@/lib/prisma";

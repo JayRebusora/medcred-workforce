@@ -1,8 +1,4 @@
-// src/app/(auth)/setup-password/page.tsx
-// Applicant password setup. The server action posts to /api/setup-password
-// so the logic stays in one place (the API route). Validation of the token
-// for initial page-load still happens here directly, because we want to
-// show a friendly page state (not POST) when the token is already bad.
+// Applicant password setup.
 
 import Link from "next/link";
 import { redirect } from "next/navigation";

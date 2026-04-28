@@ -1,19 +1,3 @@
-// src/lib/eligibility.ts
-// The credential-aware eligibility engine. Given a shift and its pool of
-// employees (with credentials loaded), decide who can be assigned.
-//
-// This module is a PURE function — no Next.js, no Prisma calls. It takes
-// plain data in and returns plain data out. The caller (API route, server
-// component) is responsible for loading the data from Prisma first.
-//
-// Why pure? Because it makes this logic:
-//   - unit-testable without a DB
-//   - reusable from cron jobs, server actions, and API routes
-//   - easy to reason about in isolation
-//
-// Capstone-worthy note: this is the file to point at during the defense.
-// It encodes the domain rules of healthcare staffing compliance.
-
 import {
   CredentialStatus,
   CredentialType,

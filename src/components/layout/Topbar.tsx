@@ -1,6 +1,3 @@
-// src/components/layout/Topbar.tsx
-// Top bar — page title slot (children) on the left, user info + sign-out on the right.
-
 import { signOut } from "@/auth";
 import { Role } from "@prisma/client";
 

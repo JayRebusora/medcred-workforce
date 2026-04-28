@@ -1,22 +1,330 @@
-/* src/app/globals.css
- * Tailwind 4 uses @import + @theme for configuration.
- * We expose font variables here so utility classes like `font-sans`,
- * `font-serif`, and `font-mono` map to the Google fonts loaded in layout.tsx.
- */
-
 @import "tailwindcss";
 
-@theme inline {
-  --font-sans: var(--font-sans), system-ui, sans-serif;
-  --font-serif: var(--font-serif), Georgia, serif;
-  --font-mono: var(--font-mono), ui-monospace, monospace;
+:root {
+  /* ─── Color tokens ──────────────────────────────────────────────── */
+  --color-bg: #f4f5f7; /* page background — cool gray-blue */
+  --color-bg-soft: #eceef2; /* subtle section variation */
+  --color-card: #ffffff;
+  --color-ink: #0b1220; /* primary text + primary buttons */
+  --color-ink-soft: #1f2a3a;
+  --color-text: #232c3a;
+  --color-muted: #5d6675;
+  --color-mute-2: #9099a8;
+  --color-line: #e2e5eb;
+  --color-line-soft: #eceef2;
+  --color-accent: #047857; /* emerald for verified/credentialed states */
+  --color-accent-bg: #ecfdf5;
+  --color-warn: #b45309; /* amber for pending/expiring */
+  --color-warn-bg: #fffbeb;
+  --color-danger: #b91c1c; /* red for missing/blocked */
+  --color-danger-bg: #fef2f2;
+
+  /* ─── Typography ────────────────────────────────────────────────── */
+  /* Display & body: Inter Tight — refined sans-serif with character.
+   * Same family throughout, with weight and tracking doing the heavy
+   * lifting. Calm, professional, modern.
+   * Mono: JetBrains Mono — for credential numbers and code. */
+  --font-display:
+    "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --font-body:
+    "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  /* ─── Spacing & rhythm ──────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-sm: 0 1px 2px rgba(11, 18, 32, 0.04);
+  --shadow: 0 4px 24px rgba(11, 18, 32, 0.06), 0 1px 2px rgba(11, 18, 32, 0.04);
+  --shadow-lg:
+    0 24px 48px rgba(11, 18, 32, 0.08), 0 2px 8px rgba(11, 18, 32, 0.04);
 }
 
-/* Subtle grid texture used as a page backdrop on public pages.
- * Light enough to be atmospheric, not distracting. */
-.bg-grid {
+/* ─── Atmospheric background ──────────────────────────────────────── */
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
   background-image:
-    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
+    radial-gradient(at 20% 0%, rgba(180, 196, 220, 0.18) 0, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(200, 210, 226, 0.15) 0, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.04, 0 0 0 0 0.06, 0 0 0 0 0.10, 0 0 0 0.025 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+}
+
+/* ─── Display type ────────────────────────────────────────────────── */
+/* All headlines now use Inter Tight with tightened letter-spacing
+ * and reduced line-height for the editorial-feel-without-serif look. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  color: var(--color-ink);
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* ─── Animation primitives ────────────────────────────────────────── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes rise-sm {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.rise {
+  animation: rise 0.7s cubic-bezier(0.21, 0.65, 0.36, 1) both;
+}
+.rise-sm {
+  animation: rise-sm 0.5s cubic-bezier(0.21, 0.65, 0.36, 1) both;
+}
+
+.stagger > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.25s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.35s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.45s;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 0.55s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Token bridges ───────────────────────────────────────────────── */
+.bg-app {
+  background: var(--color-bg);
+}
+.bg-card {
+  background: var(--color-card);
+}
+.bg-soft {
+  background: var(--color-bg-soft);
+}
+.bg-ink {
+  background: var(--color-ink);
+}
+
+.text-ink {
+  color: var(--color-ink);
+}
+.text-body {
+  color: var(--color-text);
+}
+.text-muted {
+  color: var(--color-muted);
+}
+.text-mute2 {
+  color: var(--color-mute-2);
+}
+.text-accent {
+  color: var(--color-accent);
+}
+.text-warn {
+  color: var(--color-warn);
+}
+.text-danger {
+  color: var(--color-danger);
+}
+
+.border-line {
+  border-color: var(--color-line);
+}
+.border-line-soft {
+  border-color: var(--color-line-soft);
+}
+
+/* ─── Reusable pieces ─────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-card);
+  color: var(--color-muted);
+}
+.chip.chip-accent {
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+  border-color: transparent;
+}
+.chip.chip-warn {
+  background: var(--color-warn-bg);
+  color: var(--color-warn);
+  border-color: transparent;
+}
+.chip.chip-danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border-color: transparent;
+}
+.chip.chip-ink {
+  background: var(--color-ink);
+  color: white;
+  border-color: transparent;
+}
+
+.btn-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: white;
+  border: 1px solid var(--color-ink);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+.btn-ink:hover {
+  background: #1a2336;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-ink);
+  border: 1px solid var(--color-line);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.btn-ghost:hover {
+  background: var(--color-card);
+  border-color: var(--color-mute-2);
+}
+
+.surface {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.surface-lg {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.connector {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--color-line) 20%,
+    var(--color-line) 80%,
+    transparent 100%
+  );
+}
+
+.section {
+  padding-top: 96px;
+  padding-bottom: 96px;
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 768px) {
+  .section {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
 }

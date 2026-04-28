@@ -1,13 +1,3 @@
-// src/app/api/assignments/[id]/route.ts
-// PATCH — an employee confirms or declines an assignment they've been
-// proposed. On decline, the shift flips back to OPEN so admin can re-assign.
-//
-// Body: { action: "CONFIRM" | "DECLINE", note?: string }
-// Returns 200 { status } on success.
-//
-// AuthZ: the signed-in employee must own this assignment. Admins do NOT
-// use this endpoint — they'd use a future cancel/reassign endpoint.
-
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";

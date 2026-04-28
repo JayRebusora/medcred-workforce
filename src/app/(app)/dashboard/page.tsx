@@ -1,5 +1,4 @@
-// src/app/(app)/dashboard/page.tsx
-// Server-side role router. Reads the session, dispatches to the correct
+//This page is a Server-side role router. It will Reads the session, dispatches to the correct
 // dashboard component. Each dashboard is a Server Component that does its
 // own Prisma queries.
 

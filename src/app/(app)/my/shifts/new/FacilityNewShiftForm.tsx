@@ -1,5 +1,4 @@
-// src/app/(app)/my/shifts/new/FacilityNewShiftForm.tsx
-// Facility shift request — same as admin's NewShiftForm but with the
+// The Facility shift request — same as admin's NewShiftForm
 // facility dropdown removed (facilityId is derived from session server-side).
 
 "use client";

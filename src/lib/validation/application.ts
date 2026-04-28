@@ -1,4 +1,3 @@
-// src/lib/validation/application.ts
 // Zod schemas for application submission. Shared between the client form
 // (for inline validation) and the API route (for security — never trust
 // client validation alone).

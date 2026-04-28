@@ -1,9 +1,3 @@
-// src/app/api/shifts/[id]/assign/route.ts
-// POST — propose an assignment for an employee to this shift.
-//
-// Body: { employeeId: string }
-// Returns 201 { assignmentId, snapshot } on success, 4xx on failure.
-//
 // Access: admin only (route handler check). Facilities and employees do
 // NOT assign; admins do. Admins can assign any employee to any shift as
 // long as the eligibility engine clears them.

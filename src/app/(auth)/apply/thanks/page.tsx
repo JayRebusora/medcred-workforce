@@ -1,7 +1,4 @@
-// src/app/(auth)/apply/thanks/page.tsx
-// Post-submission confirmation. No personal data shown — we don't know
-// which application the visitor just submitted (we could pass an id but
-// it adds noise; a generic thanks page is fine).
+// Post-submission confirmation.
 
 import Link from "next/link";
 

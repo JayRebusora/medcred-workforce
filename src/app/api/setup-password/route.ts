@@ -1,16 +1,3 @@
-// src/app/api/setup-password/route.ts
-// POST — accept a raw invite token + password, validate, and create the
-// full User + (Employee | Facility) + PENDING Credentials tree.
-//
-// Body: { token: string, password: string }
-// Returns 200 { email } on success, or 400/410/404 with an error code.
-//
-// Error codes (for the UI to map to messages):
-//   "INVALID"   — token not found or application not approved
-//   "EXPIRED"   — token is past expiresAt
-//   "USED"      — token already redeemed
-//   "WEAK"      — password doesn't meet minimum requirements
-
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";

@@ -1,5 +1,4 @@
-// src/app/(app)/my/shifts/page.tsx
-// Server-side role router. Employees and facilities both have /my/shifts
+// This page is a Server-side role router. Employees and facilities both have /my/shifts
 // in their sidebar, and this file dispatches to the right component based
 // on the session's role. Same pattern we used for /dashboard.
 

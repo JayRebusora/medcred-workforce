@@ -1,4 +1,3 @@
-// src/app/api/applications/route.ts
 // POST creates a new Application row. No auth required — this is the
 // public-facing endpoint the /apply form submits to.
 

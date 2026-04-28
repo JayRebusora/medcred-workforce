@@ -1,9 +1,4 @@
-// src/app/(app)/my/shifts/new/page.tsx
-// Facility-only shift request form. Same fields as the admin form but WITHOUT
-// a facility dropdown — the facility is implicit from the session. Posts to
-// the same POST /api/shifts endpoint; backend derives facilityId from the
-// session when role=CLIENT.
-
+// Facility-only shift request form.
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";

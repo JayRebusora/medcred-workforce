@@ -1,4 +1,3 @@
-// src/app/(app)/applications/[id]/page.tsx
 // Server-action handlers now delegate to the API routes rather than
 // duplicating logic. The UI is identical to the previous version.
 
@@ -14,8 +13,8 @@ type Props = {
   searchParams: Promise<{ flash?: string }>;
 };
 
-// Helper — build an absolute URL for the internal fetch, reusing the
-// request's own host. Works in dev (localhost:3000) and prod alike.
+// This is a Helper — build an absolute URL for the internal fetch, reusing the
+// request's own host. Works in dev (localhost:3000).
 async function internalUrl(path: string) {
   const h = await headers();
   const host = h.get("host") ?? "localhost:3000";
@@ -50,7 +49,7 @@ export default async function ApplicationReviewPage({
 
   const isPending = application.status === "PENDING";
 
-  // ─── Server actions: thin wrappers that call the API ─────────────
+  // ─── Wrappers that call the API ─────────────
 
   async function approve(formData: FormData) {
     "use server";

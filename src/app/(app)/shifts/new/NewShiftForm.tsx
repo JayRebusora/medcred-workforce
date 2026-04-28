@@ -1,5 +1,4 @@
-// src/app/(app)/shifts/new/NewShiftForm.tsx
-// Interactive form for creating a shift. Kept as a separate file from the
+// Interactive form for creating a shift. Note: I have to kept as a separate file from the
 // page so the page stays a server component (loads facilities server-side).
 
 "use client";

@@ -1,5 +1,4 @@
-// src/middleware.ts
-// Runs on every matching request BEFORE the page renders.
+// Note: Runs on every matching request BEFORE the page renders.
 // Reads the session cookie, runs the `authorized` callback from
 // auth.config.ts, and either allows the request through, redirects
 // to /login, or returns a custom response.

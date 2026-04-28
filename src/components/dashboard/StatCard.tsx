@@ -1,6 +1,3 @@
-// src/components/dashboard/StatCard.tsx
-// Small stat card used across all three dashboards.
-
 type Props = {
   label: string;
   value: string | number;

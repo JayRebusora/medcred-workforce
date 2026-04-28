@@ -1,4 +1,3 @@
-// src/app/(app)/my/shifts/MyShiftsFacility.tsx
 // Facility's view of their own shifts. Three sections:
 //   1. Open          — requested, no employee assigned yet
 //   2. Upcoming      — ASSIGNED or IN_PROGRESS, not yet past

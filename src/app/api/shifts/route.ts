@@ -1,4 +1,3 @@
-// src/app/api/shifts/route.ts
 // POST — create a new shift.
 //
 // Access:

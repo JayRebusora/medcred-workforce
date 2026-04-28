@@ -1,5 +1,4 @@
-// src/app/(app)/shifts/[id]/page.tsx
-// Shift detail page — now with the credential-aware assignment UI.
+// Shift detail page with the credential-aware assignment UI.
 //
 // For admins viewing an OPEN shift: runs the eligibility engine live
 // against all active employees and shows two sections:

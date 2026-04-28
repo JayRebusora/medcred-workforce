@@ -1,9 +1,3 @@
-// src/components/brand/CredentialLattice.tsx
-// The signature graphic for the public-facing pages.
-// A grid of small rectangles representing credentials: some APPROVED (filled),
-// some PENDING (outlined), some EXPIRED (strike-through). It's literal to the
-// product's purpose AND visually distinctive.
-
 type CredentialState = "approved" | "pending" | "expired" | "empty";
 
 // Deterministic pattern — not random so it looks intentional.

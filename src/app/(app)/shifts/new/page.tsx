@@ -1,8 +1,6 @@
-// src/app/(app)/shifts/new/page.tsx
-// Admin-only shift creation form. Posts to POST /api/shifts.
-// Facility shift creation is a separate page (issue #5).
+// The Admin-only shift creation form. Posts to POST /api/shifts.
 //
-// Note on route protection: middleware lets any authenticated user reach
+// Note: route protection: middleware lets any authenticated user reach
 // (app)/*, so we do the admin check in the server component wrapper.
 
 import { redirect } from "next/navigation";
