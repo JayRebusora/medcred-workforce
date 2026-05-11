@@ -1,11 +1,22 @@
+// src/components/shell/Sidebar.tsx
+// Role-aware sidebar. Renders the navigation items the current role
+// can see, grouped by section, with the currently-active link
+// visually highlighted.
+//
+// Client component so we can use usePathname() to track which route is
+// currently rendered — server components can't react to client-side
+// navigation events.
+
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Role } from "@prisma/client";
 
 type NavItem = {
   label: string;
   href: string;
   roles: Role[];
-  // Group nav items visually under a section label
   section: "main" | "admin" | "me" | "facility";
 };
 
@@ -102,6 +113,8 @@ const SECTION_LABELS: Record<NavItem["section"], string> = {
 };
 
 export function Sidebar({ role }: { role: Role }) {
+  const pathname = usePathname();
+
   const visible = NAV.filter((item) => item.roles.includes(role));
   const sections = Array.from(new Set(visible.map((i) => i.section)));
 
@@ -122,16 +135,24 @@ export function Sidebar({ role }: { role: Role }) {
                 {SECTION_LABELS[section]}
               </p>
               <ul className="space-y-0.5">
-                {items.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="block rounded-md px-2 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
+                {items.map((item) => {
+                  const active = isActive(pathname, item.href);
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={
+                          active
+                            ? "block rounded-md bg-slate-900 px-2 py-1.5 text-sm font-medium text-white shadow-sm"
+                            : "block rounded-md px-2 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+                        }
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           );
@@ -139,4 +160,16 @@ export function Sidebar({ role }: { role: Role }) {
       </nav>
     </aside>
   );
+}
+
+/** Decide whether a nav link is "active" given the current pathname.
+ *  - Exact match always active.
+ *  - For nested routes, the parent is active too (e.g. /my/credentials/new
+ *    keeps "My Credentials" highlighted). */
+function isActive(pathname: string, href: string): boolean {
+  if (pathname === href) return true;
+  // Treat /dashboard specially — it shouldn't match /dashboard-other-thing,
+  // only itself or routes literally under /dashboard/...
+  if (pathname.startsWith(href + "/")) return true;
+  return false;
 }

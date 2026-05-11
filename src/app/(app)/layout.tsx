@@ -1,5 +1,4 @@
-// src/app/(app)/layout.tsx
-// Shell for all authenticated pages. Protects the route group by asserting
+// Shell for all authenticated pages. Note: Protects the route group by asserting
 // a session exists (middleware also enforces this, but belt-and-suspenders),
 // then renders sidebar + topbar + content area.
 
