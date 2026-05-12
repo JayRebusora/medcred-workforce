@@ -1,3 +1,20 @@
+## [0.3.0] — Credential management
+
+### Added
+
+- Employee credential list at `/my/credentials` with status, expiry warnings,
+  and renewal flow for expiring credentials.
+- `POST /api/credentials` employee-scoped endpoint, defaults new credentials
+  to PENDING.
+- Admin credential review queue at `/credentials` with status filter tabs
+  (Pending / Approved / Rejected / Expired).
+- Admin credential detail page with Approve and Reject actions.
+- `PATCH /api/credentials/[id]` admin-only endpoint, enforces PENDING-state
+  guard, requires a note on REJECT.
+- Rejected credentials display the admin's note inline on the employee's
+  credential list, with a "Resubmit" action.
+- Postman collection updated with 12 security tests across four endpoints.
+
 # Changelog
 
 All notable changes to MedCred Workforce will be documented in this file.
