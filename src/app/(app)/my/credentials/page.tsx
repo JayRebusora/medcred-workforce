@@ -3,11 +3,8 @@
 // with status, issued/expiry dates, and a "Renew" link when a credential
 // is within 60 days of expiry (or already expired).
 //
-// Issue #6 acceptance criteria:
-//   - Route /my/credentials — table of own credentials
-//   - Columns: type, number, issuing body, issued, expires, status
-//   - "Add credential" button opens form
-//   - Renew button on expiring credentials (creates new, doesn't overwrite)
+// REJECTED credentials show the admin's note inline beneath the row so
+// the employee knows what to fix before resubmitting.
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -22,7 +19,6 @@ type Props = {
 };
 
 export default async function MyCredentialsPage({ searchParams }: Props) {
-  // 1. AuthZ — must be an employee
   const session = await auth();
   if (!session?.user || session.user.role !== "EMPLOYEE") {
     redirect("/dashboard");
@@ -30,16 +26,12 @@ export default async function MyCredentialsPage({ searchParams }: Props) {
 
   const sp = await searchParams;
 
-  // 2. Load the employee + their non-deleted credentials
   const employee = await prisma.employee.findUnique({
     where: { userId: session.user.id },
     include: {
       credentials: {
         where: { deletedAt: null },
-        orderBy: [
-          { type: "asc" },
-          { expiryDate: "desc" }, // newest expiry first within each type
-        ],
+        orderBy: [{ type: "asc" }, { expiryDate: "desc" }],
       },
     },
   });
@@ -54,7 +46,6 @@ export default async function MyCredentialsPage({ searchParams }: Props) {
     );
   }
 
-  // 3. Compute derived state per credential
   const now = new Date();
   const renewalThreshold = new Date(now);
   renewalThreshold.setDate(renewalThreshold.getDate() + RENEWAL_WINDOW_DAYS);
@@ -68,8 +59,6 @@ export default async function MyCredentialsPage({ searchParams }: Props) {
     return { ...c, expired, expiringSoon };
   });
 
-  // Group by type so the renew action only appears on the latest in each type
-  // (otherwise renewing a renewed credential would create a chain)
   const latestByType = new Map<string, string>();
   for (const c of credentials) {
     if (!latestByType.has(c.type)) {
@@ -146,63 +135,107 @@ export default async function MyCredentialsPage({ searchParams }: Props) {
               {credentials.map((c) => {
                 const isLatestOfType = latestByType.get(c.type) === c.id;
                 const showRenew =
-                  isLatestOfType && (c.expiringSoon || c.expired);
+                  isLatestOfType &&
+                  (c.expiringSoon || c.expired) &&
+                  c.status === CredentialStatus.APPROVED;
+                const showResubmit =
+                  isLatestOfType && c.status === CredentialStatus.REJECTED;
+                const showNote =
+                  c.status === CredentialStatus.REJECTED && c.adminNote;
+
                 return (
-                  <tr
-                    key={c.id}
-                    className="border-b border-slate-100 last:border-0"
-                  >
-                    <td className="px-5 py-3.5 text-slate-900 font-medium">
-                      {c.type.replace(/_/g, " ")}
-                    </td>
-                    <td className="px-5 py-3.5 font-mono text-xs text-slate-700">
-                      {c.credentialNumber ?? "—"}
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-600">
-                      {c.issuingBody ?? "—"}
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-600">
-                      {c.issuedDate.toLocaleDateString()}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={
-                          c.expired
-                            ? "text-red-700"
-                            : c.expiringSoon
-                              ? "text-amber-700"
-                              : "text-slate-600"
-                        }
-                      >
-                        {c.expiryDate.toLocaleDateString()}
-                      </span>
-                      {c.expired && (
-                        <span className="ml-2 text-[10px] uppercase tracking-wider text-red-600 font-medium">
-                          expired
-                        </span>
-                      )}
-                      {c.expiringSoon && (
-                        <span className="ml-2 text-[10px] uppercase tracking-wider text-amber-600 font-medium">
-                          expiring
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <StatusBadge status={c.status} />
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      {showRenew ? (
-                        <Link
-                          href={`/my/credentials/new?renew=${c.id}`}
-                          className="text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline"
+                  <>
+                    {/* Main row */}
+                    <tr
+                      key={c.id}
+                      className={`border-b ${
+                        showNote ? "border-slate-50" : "border-slate-100"
+                      } last:border-0`}
+                    >
+                      <td className="px-5 py-3.5 text-slate-900 font-medium">
+                        {c.type.replace(/_/g, " ")}
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-xs text-slate-700">
+                        {c.credentialNumber ?? "—"}
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-600">
+                        {c.issuingBody ?? "—"}
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-600">
+                        {c.issuedDate.toLocaleDateString()}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={
+                            c.expired
+                              ? "text-red-700"
+                              : c.expiringSoon
+                                ? "text-amber-700"
+                                : "text-slate-600"
+                          }
                         >
-                          Renew →
-                        </Link>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
-                  </tr>
+                          {c.expiryDate.toLocaleDateString()}
+                        </span>
+                        {c.expired &&
+                          c.status === CredentialStatus.APPROVED && (
+                            <span className="ml-2 text-[10px] uppercase tracking-wider text-red-600 font-medium">
+                              expired
+                            </span>
+                          )}
+                        {c.expiringSoon && (
+                          <span className="ml-2 text-[10px] uppercase tracking-wider text-amber-600 font-medium">
+                            expiring
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <StatusBadge status={c.status} />
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        {showRenew ? (
+                          <Link
+                            href={`/my/credentials/new?renew=${c.id}`}
+                            className="text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline"
+                          >
+                            Renew →
+                          </Link>
+                        ) : showResubmit ? (
+                          <Link
+                            href={`/my/credentials/new?renew=${c.id}`}
+                            className="text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline"
+                          >
+                            Resubmit →
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </td>
+                    </tr>
+
+                    {/* Rejection note row — full width inset under the main row */}
+                    {showNote && (
+                      <tr
+                        key={`${c.id}-note`}
+                        className="border-b border-slate-100 last:border-0 bg-red-50/40"
+                      >
+                        <td colSpan={7} className="px-5 py-3">
+                          <div className="flex items-start gap-3">
+                            <div className="mt-0.5 shrink-0">
+                              <RejectIcon />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wider text-red-700">
+                                Admin note
+                              </p>
+                              <p className="mt-0.5 text-sm text-slate-800 leading-relaxed">
+                                {c.adminNote}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 );
               })}
             </tbody>
@@ -210,12 +243,12 @@ export default async function MyCredentialsPage({ searchParams }: Props) {
         </div>
       )}
 
-      {/* Helper text below the table */}
       {credentials.length > 0 && (
         <p className="mt-4 text-xs text-slate-500">
           A credential within 60 days of expiry (or already expired) can be
-          renewed. Renewal creates a new pending credential — your existing
-          record stays intact for audit purposes.
+          renewed. Rejected credentials can be resubmitted with corrections.
+          Renewal and resubmission both create a new pending credential — your
+          existing records stay intact for audit purposes.
         </p>
       )}
     </div>
@@ -248,6 +281,20 @@ function StatusBadge({ status }: { status: CredentialStatus }) {
     >
       {cfg.label}
     </span>
+  );
+}
+
+function RejectIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke="#b91c1c" strokeWidth="1.25" />
+      <path
+        d="M5.5 5.5L10.5 10.5M10.5 5.5L5.5 10.5"
+        stroke="#b91c1c"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
