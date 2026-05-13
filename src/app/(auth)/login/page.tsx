@@ -1,13 +1,74 @@
-// Login page.
+// src/app/(auth)/login/page.tsx
+// Login page. Split into a Suspense-wrapped outer component and the
+// actual form. The outer wrapper is required because LoginForm uses
+// useSearchParams() to read ?callbackUrl, which needs a Suspense
+// boundary during static prerendering.
 
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
+// Outer wrapper — provides the Suspense boundary that production
+// prerendering requires when a client component uses useSearchParams.
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginShell />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+// While Suspense is resolving, render the static page chrome
+// without the form (which depends on URL state).
+function LoginShell() {
+  return (
+    <div className="min-h-screen grid lg:grid-cols-2">
+      <aside
+        className="relative hidden lg:flex flex-col justify-between p-12"
+        style={{ background: "var(--color-ink)" }}
+      >
+        <Link href="/" className="flex items-center gap-2">
+          <Logomark inverted />
+          <span className="display text-xl text-white">medcred</span>
+        </Link>
+        <div className="max-w-md">
+          <div className="eyebrow" style={{ color: "rgba(255,255,255,0.5)" }}>
+            Welcome back
+          </div>
+          <h1
+            className="display text-white mt-4 whitespace-nowrap"
+            style={{
+              fontSize: "clamp(2rem, 4.5vw, 3.5rem)",
+              letterSpacing: "-0.04em",
+              lineHeight: "1",
+            }}
+          >
+            Apply.{" "}
+            <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 500 }}>
+              Verify.
+            </span>{" "}
+            Work.
+          </h1>
+        </div>
+        <div
+          className="text-xs mono"
+          style={{ color: "rgba(255,255,255,0.35)" }}
+        >
+          v0.2 · Capstone project · 2026
+        </div>
+      </aside>
+      <main className="flex items-center justify-center p-12">
+        <div className="text-sm text-muted">Loading...</div>
+      </main>
+    </div>
+  );
+}
+
+// The actual login form. Uses useSearchParams, so must live inside Suspense.
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") ?? "/dashboard";
@@ -40,7 +101,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left — editorial pane */}
       <aside
         className="relative hidden lg:flex flex-col justify-between p-12"
         style={{ background: "var(--color-ink)" }}
@@ -55,7 +115,7 @@ export default function LoginPage() {
             Welcome back
           </div>
           <h1
-            className="display flex justify-center text-white mt-4 whitespace-nowrap"
+            className="display text-white mt-4 whitespace-nowrap"
             style={{
               fontSize: "clamp(2rem, 4.5vw, 3.5rem)",
               letterSpacing: "-0.04em",
@@ -64,7 +124,7 @@ export default function LoginPage() {
           >
             Apply.{" "}
             <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 500 }}>
-              Apply · Verify · Work
+              Verify.
             </span>{" "}
             Work.
           </h1>
@@ -85,7 +145,6 @@ export default function LoginPage() {
         </div>
       </aside>
 
-      {/* Right — form pane */}
       <main className="flex flex-col">
         <header className="lg:hidden p-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -162,7 +221,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Demo accounts */}
             <div className="mt-10 surface p-5">
               <div className="eyebrow mb-3">Demo accounts</div>
               <ul className="space-y-2 text-xs">
@@ -183,6 +241,9 @@ export default function LoginPage() {
                   pw="employee123"
                 />
               </ul>
+              <p className="mt-3 text-[11px] text-mute2">
+                Capstone showcase only — visible by design.
+              </p>
             </div>
           </div>
         </div>

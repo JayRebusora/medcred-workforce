@@ -6,6 +6,8 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashToken } from "@/lib/tokens";
 
+type ErrorReason = "invalid" | "expired" | "used";
+
 type Props = {
   searchParams: Promise<{ token?: string; error?: string }>;
 };
@@ -16,16 +18,16 @@ async function loadTokenContext(raw: string) {
   const token = await prisma.inviteToken.findUnique({
     where: { token: tokenHash },
   });
-  if (!token) return { reason: "invalid" as const };
-  if (token.usedAt) return { reason: "used" as const };
-  if (token.expiresAt < new Date()) return { reason: "expired" as const };
-  if (!token.applicationId) return { reason: "invalid" as const };
+  if (!token) return { reason: "invalid" as ErrorReason };
+  if (token.usedAt) return { reason: "used" as ErrorReason };
+  if (token.expiresAt < new Date()) return { reason: "expired" as ErrorReason };
+  if (!token.applicationId) return { reason: "invalid" as ErrorReason };
 
   const application = await prisma.application.findUnique({
     where: { id: token.applicationId },
   });
   if (!application || application.status !== "APPROVED") {
-    return { reason: "invalid" as const };
+    return { reason: "invalid" as ErrorReason };
   }
   return { token, application };
 }
@@ -51,7 +53,7 @@ export default async function SetupPasswordPage({ searchParams }: Props) {
 
   const ctx = await loadTokenContext(params.token);
   if ("reason" in ctx) {
-    const copy = {
+    const copy: Record<ErrorReason, { title: string; body: string }> = {
       invalid: {
         title: "Invalid invite link",
         body: "This invite link is not recognized. Please contact an administrator for a new invitation.",
@@ -64,8 +66,9 @@ export default async function SetupPasswordPage({ searchParams }: Props) {
         title: "Invite already used",
         body: "This invite link has already been used to create an account. If you've already set up your password, just sign in.",
       },
-    }[ctx.reason];
-    return <ErrorState title={copy.title} body={copy.body} showSignIn />;
+    };
+    const message = copy[ctx.reason];
+    return <ErrorState title={message.title} body={message.body} showSignIn />;
   }
 
   const { application } = ctx;
